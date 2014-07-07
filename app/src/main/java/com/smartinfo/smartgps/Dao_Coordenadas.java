@@ -46,7 +46,7 @@ public class Dao_Coordenadas {
 
             if (coordenadas.moveToFirst()) {
                 do {
-                    Log.i(TAG, coordenadas.getString(0) + " - " + coordenadas.getString(1) + " - " + coordenadas.getString(2) + " - " + coordenadas.getString(3) + " - " + coordenadas.getInt(4));
+                  //  Log.i(TAG, coordenadas.getString(0) + " - " + coordenadas.getString(1) + " - " + coordenadas.getString(2) + " - " + coordenadas.getString(3) + " - " + coordenadas.getInt(4));
 
                     JSONObject dato = new JSONObject();
 

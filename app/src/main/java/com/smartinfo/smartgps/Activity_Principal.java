@@ -178,7 +178,9 @@ Log.w(TAG,"arraanca");
 
     private boolean es_tiempo() {
 
-        return (SystemClock.elapsedRealtime() - _tiempo_de_ultima_carga) > _lapsus_de_carga;
+        boolean b = (SystemClock.elapsedRealtime() - _tiempo_de_ultima_carga) > _lapsus_de_carga;
+        //Log.w(TAG,"S-t " + SystemClock.elapsedRealtime() +" - " + _tiempo_de_ultima_carga);
+        return b;
     }
 
 
@@ -419,6 +421,7 @@ Log.w(TAG,"arraanca");
     private boolean subir_datos(String latitud, String longitud) {
 
         int logstatus = -1;
+        _tiempo_de_ultima_carga = SystemClock.elapsedRealtime();
 
         ArrayList<NameValuePair> postparameterssend2 = new ArrayList<NameValuePair>();
         postparameterssend2.add(new BasicNameValuePair("lat", latitud));
@@ -440,7 +443,7 @@ Log.w(TAG,"arraanca");
             Log.e(TAG, "server " + e.toString() + " " + postparameterssend2.toString() + " " + urlserver);
         }
         if (jata != null && jata.length() > 0) {
-            _tiempo_de_ultima_carga = SystemClock.elapsedRealtime();
+
             JSONObject jdata_object;
             try {
 
@@ -571,10 +574,10 @@ Log.w(TAG,"arraanca");
     private void mostrar_BD(Cursor c) {
 
         Log.i(TAG, "mostrar_BD");
-
+        Log.w(TAG, c.getColumnCount()+"");
         if (c.moveToFirst()) {
             do {
-                Log.w(TAG, "1");
+
                 Log.w(TAG, c.getString(0) + " - " + c.getString(1) + " - " + c.getString(2) + " - " + c.getString(3) + " - " + c.getInt(4));
             } while (c.moveToNext());
         }
