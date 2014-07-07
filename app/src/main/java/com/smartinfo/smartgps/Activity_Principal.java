@@ -1,7 +1,6 @@
 package com.smartinfo.smartgps;
 
 
-
 import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -80,8 +79,11 @@ public class Activity_Principal extends Activity implements Runnable {
 
     private LocationManager mLocationManagerGPS;
     private LocationManager mLocationManagerRED;
+    private MyLocationListener myLocationListenerGPS;
+    private MyLocationListener myLocationListenerRED;
     private Location currentLocation = null;
     private String current_estado = null;
+
     @Override
 
     public void onCreate(Bundle savedInstanceState) {
@@ -125,8 +127,9 @@ public class Activity_Principal extends Activity implements Runnable {
         }
 
     }
+
     private void inicializar() {
-        _tiempo_de_ultima_carga = SystemClock.elapsedRealtime() - _lapsus_de_carga ;
+        _tiempo_de_ultima_carga = SystemClock.elapsedRealtime() - _lapsus_de_carga;
 
         coonfButton = (Button) findViewById(R.id.btn_config);
         label_url = (TextView) findViewById(R.id.label_url);
@@ -140,8 +143,23 @@ public class Activity_Principal extends Activity implements Runnable {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
 
+                if (b) {
+                    mLocationManagerGPS.removeUpdates(myLocationListenerGPS);
+                    mLocationManagerRED.removeUpdates(myLocationListenerRED);
+                    stop();
+
+                    setNotification("GPS detenido" , "Stop");
+
+                } else {
+Log.w(TAG,"arraanca");
+                    activar_hilo();
+                }
             }
         });
+    }
+
+    public void stop() {
+        thread.interrupt();
     }
 
     private boolean comprobar_conexion() {
@@ -158,9 +176,9 @@ public class Activity_Principal extends Activity implements Runnable {
         return conexion;
     }
 
-    private boolean es_tiempo(){
+    private boolean es_tiempo() {
 
-        return  (SystemClock.elapsedRealtime() - _tiempo_de_ultima_carga) > _lapsus_de_carga;
+        return (SystemClock.elapsedRealtime() - _tiempo_de_ultima_carga) > _lapsus_de_carga;
     }
 
 
@@ -195,19 +213,19 @@ public class Activity_Principal extends Activity implements Runnable {
         coonfButton.setVisibility(View.INVISIBLE);
     }
 
-    public void setNotification(String mesaje , String t) {
+    public void setNotification(String mesaje, String t) {
         String ns = Context.NOTIFICATION_SERVICE;
         NotificationManager notManager = (NotificationManager) getSystemService(ns);
         int icono = android.R.drawable.stat_sys_warning;
-        CharSequence textoEstado = "SmarGPS "+t;
+        CharSequence textoEstado = "SmarGPS " + t;
         long hora = System.currentTimeMillis();
 
         Notification notif = new Notification(icono, textoEstado, hora);
         Context contexto = getApplicationContext();
-        CharSequence titulo = "SmarGPS "+t;
+        CharSequence titulo = "SmarGPS " + t;
         CharSequence descripcion = mesaje;
 
-        Intent notIntent = new Intent(contexto,Activity_Principal.class);
+        Intent notIntent = new Intent(contexto, Activity_Principal.class);
 
         PendingIntent contIntent = PendingIntent.getActivity(contexto, 0, notIntent, 0);
 
@@ -223,7 +241,7 @@ public class Activity_Principal extends Activity implements Runnable {
                 //writeSignalGPS();
                 validar_provider();
             }
-        }, 0, 180000);
+        }, 0, 10000);
     }
 
     private void validar_provider() {
@@ -270,10 +288,10 @@ public class Activity_Principal extends Activity implements Runnable {
 
                     break;
                 case MOSTRAR_ESTADO:
-                   if(current_estado !=null){
-                       _lbl_estado.setText(current_estado);
+                    if (current_estado != null) {
+                        _lbl_estado.setText(current_estado);
 
-                   }
+                    }
 
                     break;
 
@@ -300,11 +318,11 @@ public class Activity_Principal extends Activity implements Runnable {
                 set_pos_actual(loc);
                 handler.sendEmptyMessage(MOSTRAR_POS);
 
-                if(es_tiempo()){
-                    Log.w(TAG,"es  tiempo");
+                if (es_tiempo()) {
+                    Log.w(TAG, "es  tiempo");
                     subir_datos(latitud, longitud);
-                }else {
-                   // Log.w(TAG,"no es tiempo");
+                } else {
+                    // Log.w(TAG,"no es tiempo");
 
                 }
 
@@ -349,16 +367,16 @@ public class Activity_Principal extends Activity implements Runnable {
         if (mLocationManagerGPS.isProviderEnabled(LocationManager.GPS_PROVIDER)) {//hay gps
             provider = true;
             Looper.prepare();
-
+            myLocationListenerGPS = new MyLocationListener("GPS");
             mLocationManagerGPS.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, tiempo, distancia, new MyLocationListener("GPS"));
+                    LocationManager.GPS_PROVIDER, tiempo, distancia, myLocationListenerGPS);
 
 
             if (mLocationManagerRED.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
                 provider = true;
-
+                myLocationListenerRED = new MyLocationListener("RED");
                 mLocationManagerRED.requestLocationUpdates(
-                        LocationManager.NETWORK_PROVIDER, tiempo, distancia, new MyLocationListener("RED"));
+                        LocationManager.NETWORK_PROVIDER, tiempo, distancia, myLocationListenerRED);
 
             }
             Looper.loop();
@@ -366,15 +384,16 @@ public class Activity_Principal extends Activity implements Runnable {
 
         } else if (mLocationManagerRED.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
             Looper.prepare();
+            myLocationListenerRED = new MyLocationListener("RED");
             mLocationManagerRED.requestLocationUpdates(
-                    LocationManager.NETWORK_PROVIDER, tiempo, distancia, new MyLocationListener("RED"));
+                    LocationManager.NETWORK_PROVIDER, tiempo, distancia, myLocationListenerRED);
             Looper.loop();
             Looper.myLooper().quit();
 
         } else {// no hay gps
             provider = false;
 
-            setNotification("No se a podido establecer ubicacion configure uno de los dos protocolos","error");
+            setNotification("No se a podido establecer ubicacion configure uno de los dos protocolos", "error");
             Intent intent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
             startActivity(intent);
 
@@ -390,7 +409,6 @@ public class Activity_Principal extends Activity implements Runnable {
     private void set_estado_provider(String provider, int status) {
         current_estado = provider + " : " + status;
     }
-
 
 
     private void startService() {
